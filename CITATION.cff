@@ -23,8 +23,8 @@ authors:
   - family-names: Dustdar
     given-names: Schahram
     affiliation: "TU Wien"
-version: v1.2-teac-2a
-date-released: 2026-08-18
+version: v2.0-teac-2a-v2
+date-released: 2026-08-21
 license: MIT
 repository-code: "https://github.com/Future-Computing-Group/credible-marketplace-sim"
 identifiers:
@@ -32,8 +32,8 @@ identifiers:
     value: "10.5281/zenodo.20394158"
     description: "Zenodo concept DOI; always resolves to the latest archived version."
   - type: doi
-    value: "10.5281/zenodo.21995064"
-    description: "Zenodo archive of this release (v1.2-teac-2a)."
+    value: "10.5281/zenodo.22045882"
+    description: "Zenodo archive of this release (v2.0-teac-2a-v2)."
 preferred-citation:
   type: article
   title: "Credibility Trilemma in Polymatroidal Service Markets"
