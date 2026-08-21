@@ -62,7 +62,8 @@ expR5_design <- function(
 
 expR5_run_single <- function(condition, n_rounds, seed) {
   ## condition: list-or-tibble-row with mechanism/operator/dag_type/p_post
-  op_params <- list()
+  ## State-dependent ghost amplitude for the 2A experiments (ruling D2).
+  op_params <- list(amplitude_mode = "state_dependent")
   if (condition$mechanism == "posted_price") {
     op_params$p_post    <- condition$p_post
     op_params$mu_markup <- 0.4

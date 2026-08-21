@@ -47,6 +47,8 @@ expE_run_single <- function(condition, n_rounds, seed) {
     dag_type         = condition$dag_type,
     load_level       = 1.0,
     operator_type    = "ghost_bidder",
+    ## State-dependent ghost amplitude for the 2A experiments (ruling D2).
+    operator_params  = list(amplitude_mode = "state_dependent"),
     credibility_type = condition$credibility,
     seed             = seed
   ) %>%

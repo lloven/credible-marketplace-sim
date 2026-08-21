@@ -64,14 +64,16 @@ make_operator <- function(
   epsilon   = 0.2,    # capacity misreporting factor
   mu_markup = 0.2,    # price inflation factor
   alpha     = 0.2,    # fraction of affiliated agents
-  ghost_value = NULL,  # ghost bid value (auto-calibrated to 1.1*v_max if NULL)
+  ghost_value = NULL,  # ghost bid value (auto-calibrated from amplitude_mode if NULL)
   v_max     = 1.0,    # bid-prior upper bound; used to set ghost_value when NULL
+  amplitude_mode = c("fixed", "state_dependent"),  # ghost-bid amplitude rule
   escrow_fraction = 0.0,  # eta: fraction of payments in escrow (operator gets (1-eta) share)
   p_post    = 0.5,    # posted-price level (only for mechanism = posted_price)
   eps_max   = NULL,   # ghost_bidder_bb: cap on per-round deviation amplitude (default 1/beta)
   seed      = NULL
 ) {
   type <- match.arg(type)
+  amplitude_mode <- match.arg(amplitude_mode)
   stopifnot(escrow_fraction >= 0, escrow_fraction <= 1)
   stopifnot(v_max > 0)
   stopifnot(is.null(eps_max) || eps_max > 0)
@@ -83,6 +85,7 @@ make_operator <- function(
     alpha           = alpha,
     ghost_value     = ghost_value,
     v_max           = v_max,
+    amplitude_mode  = amplitude_mode,
     escrow_fraction = escrow_fraction,
     p_post          = p_post,
     eps_max         = eps_max,
@@ -250,11 +253,22 @@ apply_operator_strategy <- function(operator, allocation, payments, env, agents,
       }
       marginal_task <- allocation[marginal_idx[length(marginal_idx)], ]
 
-      # Fixed-amplitude ghost bid at 1.1 * v_max (independent of the realised
-      # marginal value).  This matches the SDS theorem's fixed-ε framing in
-      # `eq:tau-zero-fixed-eps`.  Override via operator$ghost_value if a
-      # different amplitude is needed (e.g. unit tests).
-      ghost_val <- operator$ghost_value %||% (1.1 * operator$v_max)
+      # Ghost-bid amplitude, 1.1 x a reference value:
+      #   "fixed" (default)  reference = v_max, so the amplitude is constant
+      #                      across rounds.  Matches the SDS theorem's fixed-ε
+      #                      framing in `eq:tau-zero-fixed-eps`, on which the
+      #                      2B forward calibration depends.
+      #   "state_dependent"  reference = the realised value of the displaced
+      #                      marginal task, so the ghost is calibrated to the
+      #                      round it attacks (pre-286d443 semantics, restored
+      #                      for the 2A experiments by ruling D2, 2026-08-21).
+      # Override via operator$ghost_value if a different amplitude is needed
+      # (e.g. unit tests).
+      ghost_val <- operator$ghost_value %||% switch(
+        operator$amplitude_mode %||% "fixed",
+        fixed           = 1.1 * operator$v_max,
+        state_dependent = marginal_task$realised_value * 1.1
+      )
 
       # New allocation: remove the marginal task (displaced by ghost)
       new_alloc <- allocation

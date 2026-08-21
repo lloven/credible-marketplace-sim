@@ -91,7 +91,9 @@ expA_design <- function(
 
 
 expA_run_single <- function(condition, n_rounds, n_agents, seed) {
-  op_params <- list()
+  ## 2A experiments run the state-dependent ghost amplitude (ruling D2,
+  ## 2026-08-21); the fixed rule stays the default elsewhere (2B).
+  op_params <- list(amplitude_mode = "state_dependent")
   if (!is.na(condition$epsilon))  op_params$epsilon  <- condition$epsilon
   if (!is.na(condition$mu_markup)) op_params$mu_markup <- condition$mu_markup
 

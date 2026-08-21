@@ -59,6 +59,8 @@ expK_run_single <- function(condition, n_rounds, seed, value_dists) {
     dag_type         = condition$dag_type,
     load_level       = 1.0,
     operator_type    = condition$operator,
+    ## State-dependent ghost amplitude for the 2A experiments (ruling D2).
+    operator_params  = list(amplitude_mode = "state_dependent"),
     credibility_type = condition$credibility,
     mechanism        = condition$mechanism,
     value_support    = vdist,
