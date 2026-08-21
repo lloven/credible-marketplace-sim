@@ -107,12 +107,17 @@ expR5_aggregate <- function(results) {
   ## CoNC^W against the matched truthful baseline. γ_ij mean/std computed
   ## separately (topology-only).
 
+  ## Stored artifacts predating the revenue column still aggregate; their
+  ## revenue-normalised ratio comes out NA.
+  if (!"revenue" %in% names(results)) results$revenue <- NA_real_
+
   ## Per-condition mean welfare + mean op surplus across seeds & rounds
   per_cond <- results %>%
     group_by(mechanism_lbl, operator_lbl, dag_type_lbl, p_post_lbl) %>%
     summarise(
       welfare_mean  = mean(welfare, na.rm = TRUE),
       op_surplus    = mean(net_op_surplus, na.rm = TRUE),
+      revenue_mean  = mean(revenue, na.rm = TRUE),
       welfare_sd    = sd(welfare, na.rm = TRUE),
       op_surplus_sd = sd(net_op_surplus, na.rm = TRUE),
       n_rounds      = dplyr::n(),
@@ -124,7 +129,8 @@ expR5_aggregate <- function(results) {
     filter(operator_lbl == "truthful") %>%
     select(mechanism_lbl, dag_type_lbl, p_post_lbl,
            welfare_baseline = welfare_mean,
-           op_baseline      = op_surplus)
+           op_baseline      = op_surplus,
+           rev_baseline     = revenue_mean)
 
   ## Join + compute CoNC variants
   summary <- per_cond %>%
@@ -133,7 +139,10 @@ expR5_aggregate <- function(results) {
     mutate(
       CoNC_op = (op_surplus - op_baseline) / pmax(welfare_baseline, 1e-9),
       CoNC_W  = (welfare_baseline - welfare_mean) / pmax(welfare_baseline, 1e-9),
-      CoNC_ag = CoNC_W + CoNC_op
+      CoNC_ag = CoNC_W + CoNC_op,
+      ## eq:conc remark: same numerator over truthful operator revenue.
+      CoNC_op_rev = (op_surplus - op_baseline) /
+        ifelse(is.finite(rev_baseline) & rev_baseline > 0, rev_baseline, NA_real_)
     )
 
   ## γ_ij stats per topology

@@ -144,6 +144,11 @@ compute_welfare <- function(task_outcomes, gamma_c = 0.05, utilisation = NULL) {
 ##              E[welfare | truthful]      (welfare-side loss rate)
 ##   CoNC^ag = CoNC^W + CoNC^op            (agent-side surplus loss:
 ##                                          welfare loss + operator transfer)
+##   CoNC^op_rev = (E[op_surplus | deviated] - E[op_surplus | truthful]) /
+##              E[revenue | truthful]      (same numerator over truthful
+##                                          operator revenue; reported for the
+##                                          cor:conc-lb cells, NA when the
+##                                          input frames have no revenue column)
 ## All three are dimensionless; the manuscript Theorem on CoNC predicts
 ## CoNC^ag >= CoNC^op in absolute value (agents bear both the transfer and
 ## the DWL).
@@ -160,13 +165,25 @@ compute_conc_variants <- function(truthful, deviated) {
   op_truth  <- mean(op_col(truthful), na.rm = TRUE)
   op_dev    <- mean(op_col(deviated), na.rm = TRUE)
 
+  ## Revenue-normalised operator ratio (eq:conc remark): same numerator, but
+  ## divided by truthful operator revenue instead of truthful welfare. NA when
+  ## the frames predate the revenue column (stored artifacts).
+  rev_truth <- if ("revenue" %in% names(truthful)) {
+    mean(truthful$revenue, na.rm = TRUE)
+  } else NA_real_
+
   if (!is.finite(W_truth) || W_truth <= 0) {
-    return(list(CoNC_op = NA_real_, CoNC_ag = NA_real_, CoNC_W = NA_real_))
+    return(list(CoNC_op = NA_real_, CoNC_ag = NA_real_, CoNC_W = NA_real_,
+                CoNC_op_rev = NA_real_))
   }
   CoNC_op <- (op_dev - op_truth) / W_truth
   CoNC_W  <- (W_truth - W_dev) / W_truth
   CoNC_ag <- CoNC_W + CoNC_op
-  list(CoNC_op = CoNC_op, CoNC_ag = CoNC_ag, CoNC_W = CoNC_W)
+  CoNC_op_rev <- if (is.finite(rev_truth) && rev_truth > 0) {
+    (op_dev - op_truth) / rev_truth
+  } else NA_real_
+  list(CoNC_op = CoNC_op, CoNC_ag = CoNC_ag, CoNC_W = CoNC_W,
+       CoNC_op_rev = CoNC_op_rev)
 }
 
 
