@@ -19,7 +19,7 @@
 ## companion paper (Trilogy-2B: Deployable Credibility Surface), not 2A.
 ## The 2A/2B split on 2026-05-23 left Fig 2's two-panel form misaligned
 ## with 2A's scope; this single-panel version restores caption/figure
-## coherence (audit M-D-1, 2026-06-02).
+## coherence.
 ##
 ## Visual language (unchanged from prior 2A/TSC exemplar):
 ##   - sans-serif in-figure text

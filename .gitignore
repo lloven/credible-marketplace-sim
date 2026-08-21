@@ -28,10 +28,10 @@ validate_quick.R
 .claude/
 CLAUDE.md
 
-# Operations log (campaign reconstruction artefact; never committed)
+# Operations log (working notes; never committed)
 OPSLOG.md
 
-# Internal planning / agent artefacts — never committed to the public repo (L73)
+# Internal planning notes — never committed
 *PLAN*.md
 *OPERATIONS-LOG*.md
 *MANUSCRIPT-EDITS*.md

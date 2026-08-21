@@ -1,5 +1,4 @@
-## Tests for the ghost-bid amplitude mode (TEAC 2A campaign, E1a §2;
-## D2 ruling 2026-08-21: Option A).
+## Tests for the ghost-bid amplitude mode (see README, "Ghost-bid amplitude").
 ##
 ## Two semantics coexist:
 ##   "fixed"           ghost_val = 1.1 * v_max  (default; 2B's SDS forward

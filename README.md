@@ -112,7 +112,7 @@ figures in `figs/` and the ten CSVs in `exports/`; both are tracked, so
 Scope: the 2A closure only. The 2B targets (`expB` / `expC` / `expD` /
 `expF` / `expJ` / `expL` / `expL2` / `expL3` / `expL4`) are deliberately
 not built, because the per-round `revenue` column invalidates them and
-their rebuild belongs to the 2B campaign. Run `targets::tar_make()` for
+their rebuild belongs with Paper 2B. Run `targets::tar_make()` for
 the full pipeline.
 
 ### Deposited raw outputs

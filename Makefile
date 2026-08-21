@@ -12,7 +12,7 @@
 # Scope: the 2A closure only. The 2B targets (expB / expC / expD / expF /
 # expJ / expL / expL2 / expL3 / expL4) are deliberately NOT built here --
 # the per-round `revenue` column added in c2e5e1b invalidates them, and
-# their rebuild is 2B-campaign business.
+# their rebuild belongs with Paper 2B.
 
 R := Rscript
 

@@ -1,7 +1,6 @@
-## Tests for the revenue-normalised CoNC^op variant (TEAC 2A campaign, E1a §1;
-## D3 ruling 2026-08-21).
+## Tests for the revenue-normalised CoNC^op variant.
 ##
-## D3 keeps the WELFARE-normalised family as the primary definition (all three
+## Paper 2A keeps the WELFARE-normalised family as the primary definition (all three
 ## variants over E[W*], so CoNC^ag = CoNC^W + CoNC^op is an accounting identity).
 ## The revenue-normalised operator ratio
 ##   CoNC^op_rev = (E[op surplus | dev] - E[op surplus | truthful]) / E[rev | truthful]

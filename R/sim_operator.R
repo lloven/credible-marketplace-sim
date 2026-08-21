@@ -260,8 +260,8 @@ apply_operator_strategy <- function(operator, allocation, payments, env, agents,
       #                      2B forward calibration depends.
       #   "state_dependent"  reference = the realised value of the displaced
       #                      marginal task, so the ghost is calibrated to the
-      #                      round it attacks (pre-286d443 semantics, restored
-      #                      for the 2A experiments by ruling D2, 2026-08-21).
+      #                      round it attacks.  This is the rule Paper 2A's
+      #                      experiments (A / E / K / R5) run under.
       # Override via operator$ghost_value if a different amplitude is needed
       # (e.g. unit tests).
       ghost_val <- operator$ghost_value %||% switch(

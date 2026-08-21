@@ -1,8 +1,8 @@
-## Tests for the per-round operator revenue column (TEAC 2A campaign, E1a §1).
+## Tests for the per-round operator revenue column.
 ##
 ## Operator revenue = payments collected on allocated tasks in the round, taken
 ## AFTER any credibility reversion. It is the denominator of the
-## revenue-normalised CoNC^op variant (eq:conc remark, D3 ruling 2026-08-21).
+## revenue-normalised CoNC^op variant.
 
 library(testthat)
 
