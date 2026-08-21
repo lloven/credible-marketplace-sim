@@ -8,7 +8,8 @@ polymatroidal service markets (Trilogy Paper 2, split into 2A + 2B):
 
 Both are in preparation for ACM Transactions on Economics and Computation
 (TEAC). Released under the MIT licence; see `LICENSE` and `CITATION.cff`,
-and the Zenodo archive at https://doi.org/10.5281/zenodo.20394159.
+and the Zenodo archive at https://doi.org/10.5281/zenodo.20394158
+(concept DOI; always resolves to the latest archived version).
 
 ## Overview
 
@@ -91,6 +92,72 @@ targets::tar_read(expA_summary)
 targets::tar_read(stats_expA)
 ```
 
+## Reproducing the 2A results
+
+The `Makefile` rebuilds everything Trilogy Paper 2A reports, end to end
+from source:
+
+```sh
+make test        # testthat suite (159 tests)
+make figures     # 2A targets subset + the R-5 and Fig. 2 drivers
+make exports     # exports/*.csv.gz from the _targets store
+make reproduce   # all three, in order
+```
+
+`make reproduce` takes roughly 50 min on a laptop (~42 min for the
+targets subset, ~8 min for the R-5 driver). It rewrites the twelve 2A
+figures in `figs/` and the ten CSVs in `exports/`; both are tracked, so
+`git status` after a run is the reproduction check.
+
+Scope: the 2A closure only. The 2B targets (`expB` / `expC` / `expD` /
+`expF` / `expJ` / `expL` / `expL2` / `expL3` / `expL4`) are deliberately
+not built, because the per-round `revenue` column invalidates them and
+their rebuild belongs to the 2B campaign. Run `targets::tar_make()` for
+the full pipeline.
+
+### Deposited raw outputs
+
+`exports/` holds the per-round results and the aggregated summaries
+behind every number in 2A §5, as gzipped CSV (3.4 MB total), so they can
+be read without R or the `_targets` cache:
+
+| File | Rows x cols | Contents |
+|------|-------------|----------|
+| `expA_results_raw.csv.gz` | 40500 x 26 | Exp. 1 per-round records |
+| `expE_results_raw.csv.gz` | 18000 x 26 | Exp. 2 per-round records |
+| `expK_results_raw.csv.gz` | 24000 x 27 | Exp. 3 per-round records |
+| `expR5_results_raw.csv.gz` | 19500 x 29 | Exp. R-5 per-round records |
+| `expA_summary.csv.gz` | 45 x 11 | Exp. 1 per-condition aggregates |
+| `expE_summary.csv.gz` | 36 x 15 | Exp. 2 per-condition aggregates |
+| `expK_summary.csv.gz` | 48 x 18 | Exp. 3 per-condition aggregates |
+| `expR5_summary_summary.csv.gz` | 39 x 22 | R-5 CoNC variants per condition |
+| `expR5_summary_per_cond.csv.gz` | 39 x 10 | R-5 per-condition means |
+| `expR5_summary_gamma_stats.csv.gz` | 3 x 6 | R-5 gamma_ij by topology |
+
+The full `_targets` store (22 MB, and containing the 2B objects) is not
+version-controlled; `exports/` is the data-availability referent.
+
+### Ghost-bid amplitude (2A vs 2B)
+
+`make_operator()` takes an `amplitude_mode` argument that fixes the
+ghost bid's deviation amplitude (`R/sim_operator.R`):
+
+- `"fixed"` (default) --- the ghost bid is `1.1 * v_max`, a design
+  constant independent of the round. This is the rule the 2B
+  forward-calibration experiments are calibrated against, and it makes
+  per-round ghost surplus deterministic.
+- `"state_dependent"` --- the ghost bid is `1.1 *
+  marginal_task$realised_value`, so the deviation amplitude scales with
+  the latency-discounted realised value of the task actually displaced.
+
+**The four 2A experiments (A / E / K / R5) all pass
+`amplitude_mode = "state_dependent"`.** Per-round ghost surplus is
+therefore a random variable rather than a constant, which is what makes
+the error bars, the bootstrap CIs and Cliff's delta in 2A §5 meaningful.
+The 2B experiments keep the `"fixed"` default. Mixing the two semantics
+across experiments produces numbers that are not comparable, so do not
+change the mode for one experiment alone.
+
 ## Dependencies
 
 - R (>= 4.2)
@@ -144,7 +211,8 @@ R/
   plot_helpers.R         # shared: theme_ieee, palettes, save_fig
   plots_combined.R       # combined figures for Exps A-I (Manu. 1-2, 4-6, 10-11)
   plots_expA.R ... plots_expO.R   # per-experiment figure functions
-figs/                    # generated figures (PDF, gitignored)
+figs/                    # generated figures (PDF, tracked)
+exports/                 # deposited raw outputs (CSV.gz, tracked)
 _targets/                # pipeline cache (gitignored)
 ```
 
