@@ -537,9 +537,16 @@ run_market_round <- function(tasks, env, dag, operator, credibility,
   utilisation <- demand_per_tier / env$capacity
   welfare <- compute_welfare(allocation, utilisation = utilisation)
 
+  # Operator revenue: payments actually collected this round, i.e. after any
+  # credibility reversion (a detected broadcast/blockchain deviation reports
+  # the reverted truthful payments). Denominator of the revenue-normalised
+  # CoNC^op variant (eq:conc remark).
+  revenue <- sum(allocation$vcg_payment[allocation$allocated], na.rm = TRUE)
+
   list(
     allocation      = allocation,
     welfare         = welfare,
+    revenue         = revenue,
     prices          = new_prices,
     operator_surplus = operator_result$surplus,
     deviation_amplitude = operator_result$deviation_amplitude %||% NA_real_,
@@ -611,6 +618,7 @@ run_simulation <- function(
     history[[r]] <- tibble(
       round            = r,
       welfare          = round_result$welfare,
+      revenue          = round_result$revenue,
       drop_rate        = round_result$drop_rate,
       operator_surplus = round_result$operator_surplus,
       deviation_amplitude = round_result$deviation_amplitude,
