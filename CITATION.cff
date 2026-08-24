@@ -24,7 +24,7 @@ authors:
     given-names: Schahram
     affiliation: "TU Wien"
 version: v2.0-teac-2a-v2
-date-released: 2026-08-21
+date-released: 2026-08-24
 license: MIT
 repository-code: "https://github.com/Future-Computing-Group/credible-marketplace-sim"
 identifiers:
