@@ -211,6 +211,13 @@ R/
   plot_helpers.R         # shared: theme_ieee, palettes, save_fig
   plots_combined.R       # combined figures for Exps A-I (Manu. 1-2, 4-6, 10-11)
   plots_expA.R ... plots_expO.R   # per-experiment figure functions
+scripts/
+  verify_amin_instance.py  # exact-rational certificate: Appendix-Z Lemma Z.0'/Z.1
+                           #   and Theorem Z.1 on three named instances (~5 s)
+  verify_amin_prechecks.py # exact-rational certificate: eta_Z genericity and
+                           #   welfare-maximality sweeps (~80 s, needs scipy)
+  amin_z_harness.py        # shared Appendix-Z model harness for the two above
+  run_expR5_*.R, export_raw.R, plots_fig2_summary.R, ...   # drivers
 figs/                    # generated figures (PDF, tracked)
 exports/                 # deposited raw outputs (CSV.gz, tracked)
 _targets/                # pipeline cache (gitignored)
