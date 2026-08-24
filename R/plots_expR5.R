@@ -10,52 +10,81 @@ suppressPackageStartupMessages({
 ## (b) γ_ij histogram per topology (one facet per topology)
 ## (c) Realisation-wise vs in-expectation reconciliation
 
+## Arm label. p_post is a genuine design dimension only on the posted-price
+## mechanism (it is a nominal placeholder under VCG / first-price), and on the
+## posted-price arms CoNC^op moves strongly with it — reversing SIGN on the
+## ghost arm between p_post = 0.5 and 0.8 — so those arms are kept separate
+## instead of being averaged into a meaningless mean.
+.expR5_arm_label <- function(mechanism_lbl, operator_lbl, p_post_lbl) {
+  op   <- sub("_bidder$", "", sub("^posted_price_", "", operator_lbl))
+  base <- paste(mechanism_lbl, op, sep = " / ")
+  ifelse(mechanism_lbl == "posted_price",
+         sprintf("%s\np = %.1f", base, p_post_lbl), base)
+}
+
 plot_expR5_conc_by_mechanism <- function(summary_obj, bar_width = 0.6,
                                          panel_tag = NULL) {
-  ## The CoNC variants are ADDITIVE: CoNC^ag = CoNC^op + CoNC^W (operator
-  ## transfer + welfare destruction). So we STACK op (bottom) + W (top); the
-  ## total bar height is the agent-side cost CoNC^ag. Topology barely matters
-  ## here (CoNC^op spread across tree/sp/entangled is < 0.013), so we pool
-  ## across DAG topologies and show the small spread as an error bar on the
+  ## The CoNC variants are ADDITIVE: CoNC^ag = CoNC^op + CoNC^W (the agents'
+  ## payment increment plus the welfare they lose). So we STACK op + W; the
+  ## diamond marks the total, the agent-side cost CoNC^ag. CoNC^op here is the
+  ## eq:conc quantity — the collected-revenue delta — not the operator's
+  ## extraction surplus, and it can be NEGATIVE (a ghost bid that displaces a
+  ## paying agent can lower collected revenue while still paying the operator),
+  ## hence the zero line and the explicit total marker.
+  ## Topology barely matters within an arm (spread < 0.008 on CoNC^ag), so we
+  ## pool across DAG topologies and show the spread as an error bar on the
   ## total — freeing the figure to make the mechanism-class comparison and the
   ## op/W decomposition the visual message (contrast Fig 4, where topology IS
-  ## the message and gets a shared-axis treatment).
-  per_dag <- summary_obj$summary %>%
+  ## the message and gets a shared-axis treatment). Values span three orders of
+  ## magnitude, so CoNC^op is printed above each bar: on a linear axis the
+  ## VCG / first-price bars are below the resolution, and a log axis cannot
+  ## carry either the negative arm or the additive stack.
+  pooled <- summary_obj$summary %>%
     filter(operator_lbl != "truthful") %>%
-    group_by(mechanism_lbl, operator_lbl, dag_type_lbl) %>%
-    summarise(CoNC_op = mean(CoNC_op, na.rm = TRUE),
-              CoNC_W  = mean(CoNC_W,  na.rm = TRUE),
-              CoNC_ag = mean(CoNC_ag, na.rm = TRUE), .groups = "drop")
-
-  pooled <- per_dag %>%
-    group_by(mechanism_lbl, operator_lbl) %>%
-    summarise(op = mean(CoNC_op), W = mean(CoNC_W),
-              ag = mean(CoNC_ag), ag_sd = sd(CoNC_ag), .groups = "drop") %>%
-    mutate(mech_op = paste(mechanism_lbl, operator_lbl, sep = " / ")) %>%
+    mutate(arm = .expR5_arm_label(mechanism_lbl, operator_lbl, p_post_lbl)) %>%
+    group_by(arm) %>%
+    summarise(op = mean(CoNC_op, na.rm = TRUE),
+              W  = mean(CoNC_W,  na.rm = TRUE),
+              ag = mean(CoNC_ag, na.rm = TRUE),
+              ag_sd = sd(CoNC_ag, na.rm = TRUE), .groups = "drop") %>%
     arrange(ag) %>%
-    mutate(mech_op = factor(mech_op, levels = mech_op))
+    mutate(arm = factor(arm, levels = arm),
+           lbl = formatC(op, format = "g", digits = 3),
+           lbl_y = pmax(ag, W, 0))
 
   stack_df <- pooled %>%
-    select(mech_op, op, W) %>%
+    select(arm, op, W) %>%
     pivot_longer(c(op, W), names_to = "component", values_to = "value") %>%
     mutate(component = factor(component, levels = c("W", "op")))
 
-  ggplot(stack_df, aes(x = mech_op, y = value, fill = component)) +
+  span <- max(pooled$lbl_y) - min(pooled$op, 0)
+
+  ggplot(stack_df, aes(x = arm, y = value, fill = component)) +
+    geom_hline(yintercept = 0, linewidth = 0.3, colour = "grey40") +
     geom_col(width = bar_width, colour = "white", linewidth = 0.3) +
     geom_errorbar(data = pooled, inherit.aes = FALSE,
-                  aes(x = mech_op, ymin = ag - ag_sd, ymax = ag + ag_sd),
+                  aes(x = arm, ymin = ag - ag_sd, ymax = ag + ag_sd),
                   width = 0.18, linewidth = 0.4) +
+    geom_point(data = pooled, inherit.aes = FALSE,
+               aes(x = arm, y = ag), shape = 23, size = 1.9,
+               fill = "white", colour = "black", stroke = 0.5) +
+    geom_text(data = pooled, inherit.aes = FALSE,
+              aes(x = arm, y = lbl_y + 0.05 * span, label = lbl),
+              size = 2.7, colour = "grey20") +
     scale_fill_manual(
       values = c(W = "#FDAE61", op = "#D7191C"),
       breaks = c("W", "op"),
       labels = c(expression(CoNC^{W} ~ "(welfare destruction)"),
-                 expression(CoNC^{op} ~ "(operator transfer)")),
+                 expression(CoNC^{op} ~ "(revenue delta)")),
       name = NULL) +
+    scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +
     labs(x = NULL, y = expression(CoNC ~ "(dimensionless)"),
          title = panel_tag %||% "Cost of Non-Credibility by mechanism / operator",
-         subtitle = "Stacked: operator transfer + welfare loss = agent cost (pooled over topologies; error bar = spread)") +
+         subtitle = expression("Stacked " * CoNC^{op} * " + " * CoNC^{W} * " = " *
+                               CoNC^{ag} * " (diamond); printed values are " *
+                               CoNC^{op})) +
     theme_minimal(base_size = 11) +
-    theme(axis.text.x = element_text(angle = 20, hjust = 1),
+    theme(axis.text.x = element_text(angle = 20, hjust = 1, size = 7),
           legend.position = "bottom",
           plot.margin = margin(t = 5, r = 8, b = 5, l = 14))
 }
@@ -121,11 +150,11 @@ plot_expR5_gamma_distribution <- function(summary_obj) {
 .expR5_mechop_levels <- function(summary_obj) {
   summary_obj$summary %>%
     filter(operator_lbl != "truthful") %>%
-    group_by(mechanism_lbl, operator_lbl) %>%
+    mutate(arm = .expR5_arm_label(mechanism_lbl, operator_lbl, p_post_lbl)) %>%
+    group_by(arm) %>%
     summarise(ag = mean(CoNC_ag, na.rm = TRUE), .groups = "drop") %>%
     arrange(ag) %>%
-    mutate(mech_op = paste(mechanism_lbl, operator_lbl, sep = " / ")) %>%
-    pull(mech_op)
+    pull(arm)
 }
 
 ## Panel (b): the REALISATION distribution. Per-round net operator surplus
@@ -137,7 +166,8 @@ plot_expR5_gamma_distribution <- function(summary_obj) {
 plot_expR5_surplus_realisation <- function(results_raw, lvl) {
   df <- results_raw %>%
     filter(operator_lbl != "truthful") %>%
-    mutate(mech_op = factor(paste(mechanism_lbl, operator_lbl, sep = " / "),
+    mutate(mech_op = factor(.expR5_arm_label(mechanism_lbl, operator_lbl,
+                                             p_post_lbl),
                             levels = lvl))
   ggplot(df, aes(x = mech_op, y = net_op_surplus)) +
     geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.3,
