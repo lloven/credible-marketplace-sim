@@ -51,6 +51,11 @@ list(
     expA_run_all(expA_conditions, n_rounds, n_agents_default, n_seeds)
   ),
   tar_target(expA_summary, expA_aggregate(expA_results_raw)),
+  # eq:conc family for Exp. 1: per (topology x load) cell against its own
+  # matched truthful baseline, then the nine-cell ghost-bidder means that
+  # sec:eval-conc reports (audit M-D-01 / M-D-02).
+  tar_target(expA_conc, expA_conc_by_cell(expA_results_raw)),
+  tar_target(expA_conc_headline, expA_headline_conc(expA_conc)),
   tar_target(expA_fig_welfare, plot_expA_welfare(expA_summary)),
   tar_target(expA_fig_welfare_by_load, plot_expA_welfare_by_load(expA_summary)),
   tar_target(expA_fig_surplus, plot_expA_surplus(expA_summary)),

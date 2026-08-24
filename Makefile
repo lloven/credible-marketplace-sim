@@ -20,7 +20,7 @@ R := Rscript
 # that writes its objects into the store (see scripts/run_expR5_standalone.R).
 # Fig. 2 is likewise produced by a script, not a target.
 TARGETS_2A := \
-	expA_conditions expA_results_raw expA_summary stats_expA \
+	expA_conditions expA_results_raw expA_summary expA_conc expA_conc_headline stats_expA \
 	expA_fig_welfare expA_fig_welfare_by_load expA_fig_surplus expA_fig_combined \
 	expE_conditions expE_results_raw expE_summary stats_expE \
 	expE_fig_trilemma expE_fig_detection expE_fig_scaling expE_fig_combined \

@@ -165,3 +165,67 @@ expA_aggregate <- function(results) {
 
   summary
 }
+
+
+## ── Per-cell CoNC variants for Exp. 1 (audit M-D-01 / M-D-02) ────────
+##
+## `expA_aggregate()` reports welfare loss and operator surplus; it never
+## produced the eq:conc family, so the manuscript's per-cell revenue-normalised
+## ratio and its 1.74% / 1.72% / 1.58% headline had no producing code.  These
+## two functions close that.
+##
+## Each (topology x load) cell is scored against ITS OWN matched truthful
+## baseline before any averaging: truthful revenue spans 0.36 to 24.4 across the
+## nine ghost cells, so pooling rounds before dividing would average over
+## incomparable denominators (sec:eval-conc).  The headline is therefore the
+## mean of the per-cell ratios, not a ratio of pooled means.
+##
+## Definitions are `compute_conc_variants()` in R/sim_helpers.R: CoNC^op is the
+## collected-REVENUE delta over E[W*], and the operator's extraction surplus is
+## a different quantity reported alongside it.
+
+expA_conc_by_cell <- function(results) {
+  cells <- results %>%
+    distinct(dag_type, load_level, load_name)
+  ops <- setdiff(unique(results$operator_type), "truthful")
+
+  rows <- list()
+  for (i in seq_len(nrow(cells))) {
+    dag <- cells$dag_type[i]
+    lvl <- cells$load_level[i]
+    truthful <- results %>%
+      filter(dag_type == dag, load_level == lvl, operator_type == "truthful")
+    for (op in ops) {
+      deviated <- results %>%
+        filter(dag_type == dag, load_level == lvl, operator_type == op)
+      if (nrow(deviated) == 0L || nrow(truthful) == 0L) next
+      v <- compute_conc_variants(truthful, deviated)
+      rows[[length(rows) + 1L]] <- tibble(
+        dag_type      = dag,
+        load_level    = lvl,
+        load_name     = cells$load_name[i],
+        operator_type = op,
+        extraction_op = v$extraction_op,
+        CoNC_op       = v$CoNC_op,
+        CoNC_op_rev   = v$CoNC_op_rev,
+        CoNC_W        = v$CoNC_W,
+        CoNC_ag       = v$CoNC_ag
+      )
+    }
+  }
+  bind_rows(rows) %>% arrange(operator_type, dag_type, load_level)
+}
+
+expA_headline_conc <- function(conc_by_cell) {
+  conc_by_cell %>%
+    group_by(operator_type) %>%
+    summarise(
+      n_cells       = n(),
+      extraction_op = mean(extraction_op, na.rm = TRUE),
+      CoNC_op       = mean(CoNC_op,       na.rm = TRUE),
+      CoNC_op_rev   = mean(CoNC_op_rev,   na.rm = TRUE),
+      CoNC_W        = mean(CoNC_W,        na.rm = TRUE),
+      CoNC_ag       = mean(CoNC_ag,       na.rm = TRUE),
+      .groups = "drop"
+    )
+}

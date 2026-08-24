@@ -18,7 +18,8 @@ dir.create(outdir, showWarnings = FALSE)
 
 targets_2a <- c(
   "expA_results_raw", "expE_results_raw", "expK_results_raw", "expR5_results_raw",
-  "expA_summary", "expE_summary", "expK_summary", "expR5_summary"
+  "expA_summary", "expE_summary", "expK_summary", "expR5_summary",
+  "expA_conc", "expA_conc_headline"
 )
 
 write_gz <- function(df, name) {
