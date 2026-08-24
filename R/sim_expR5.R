@@ -105,11 +105,11 @@ expR5_run_all <- function(conditions, n_rounds = 100, n_seeds = 5) {
 
 expR5_aggregate <- function(results) {
   ## Per (mechanism × dag × operator × p_post) report CoNC^op / CoNC^ag /
-  ## CoNC^W against the matched truthful baseline. γ_ij mean/std computed
-  ## separately (topology-only).
+  ## CoNC^W / CoNC^op_rev and the operator extraction rate against the matched
+  ## truthful baseline. γ_ij mean/std computed separately (topology-only).
 
-  ## Stored artifacts predating the revenue column still aggregate; their
-  ## revenue-normalised ratio comes out NA.
+  ## Stored artifacts predating the revenue column still aggregate; every
+  ## revenue-delta quantity (CoNC^op, CoNC^ag, CoNC^op_rev) comes out NA.
   if (!"revenue" %in% names(results)) results$revenue <- NA_real_
 
   ## Per-condition mean welfare + mean op surplus across seeds & rounds
@@ -138,11 +138,16 @@ expR5_aggregate <- function(results) {
     left_join(baseline,
               by = c("mechanism_lbl", "dag_type_lbl", "p_post_lbl")) %>%
     mutate(
-      CoNC_op = (op_surplus - op_baseline) / pmax(welfare_baseline, 1e-9),
+      ## eq:conc numerator: the collected-revenue delta (= the agents'
+      ## aggregate payment increment).  The operator's extraction surplus is a
+      ## different measure and is carried alongside; see compute_conc_variants().
+      rev_delta = revenue_mean - rev_baseline,
+      extraction_op = (op_surplus - op_baseline) / pmax(welfare_baseline, 1e-9),
+      CoNC_op = rev_delta / pmax(welfare_baseline, 1e-9),
       CoNC_W  = (welfare_baseline - welfare_mean) / pmax(welfare_baseline, 1e-9),
       CoNC_ag = CoNC_W + CoNC_op,
       ## eq:conc remark: same numerator over truthful operator revenue.
-      CoNC_op_rev = (op_surplus - op_baseline) /
+      CoNC_op_rev = rev_delta /
         ifelse(is.finite(rev_baseline) & rev_baseline > 0, rev_baseline, NA_real_)
     )
 

@@ -101,25 +101,30 @@ test_that("first_price with ghost_bidder inflates payments above truthful", {
 
 ## ── R5-3: CoNC^op / CoNC^ag / CoNC^W aggregator ───────────────────────
 
-test_that("compute_conc_variants returns the three CoNC variants", {
+test_that("compute_conc_variants returns the CoNC variants", {
+  ## Revenue 8 -> 8.4 (the eq:conc numerator, = the agents' payment increment),
+  ## operator extraction surplus 0 -> 0.5 (a different measure), welfare 10 -> 9.
   truthful <- tibble::tibble(
     welfare           = c(10, 10, 10),
     operator_surplus  = c(0, 0, 0),
-    net_op_surplus    = c(0, 0, 0)
+    net_op_surplus    = c(0, 0, 0),
+    revenue           = c(8, 8, 8)
   )
   deviated <- tibble::tibble(
     welfare           = c(9, 9, 9),
     operator_surplus  = c(0.5, 0.5, 0.5),
-    net_op_surplus    = c(0.5, 0.5, 0.5)
+    net_op_surplus    = c(0.5, 0.5, 0.5),
+    revenue           = c(8.4, 8.4, 8.4)
   )
   out <- compute_conc_variants(truthful, deviated)
-  expect_true(all(c("CoNC_op", "CoNC_ag", "CoNC_W") %in% names(out)))
+  expect_true(all(c("CoNC_op", "CoNC_ag", "CoNC_W", "extraction_op") %in% names(out)))
   ## CoNC^W = (10 - 9)/10 = 0.1
   expect_equal(unname(out$CoNC_W), 0.1, tolerance = 1e-9)
-  ## CoNC^op = (0.5 - 0)/10 = 0.05
-  expect_equal(unname(out$CoNC_op), 0.05, tolerance = 1e-9)
+  ## CoNC^op = (8.4 - 8)/10 = 0.04 ; extraction^op = (0.5 - 0)/10 = 0.05
+  expect_equal(unname(out$CoNC_op), 0.04, tolerance = 1e-9)
+  expect_equal(unname(out$extraction_op), 0.05, tolerance = 1e-9)
   ## CoNC^ag (agent surplus loss) should be >= CoNC^op in absolute value
-  ## (since agent surplus loss = welfare loss + operator transfer)
+  ## (since agent surplus loss = welfare loss + payment increment)
   expect_true(abs(out$CoNC_ag) >= abs(out$CoNC_op) - 1e-9)
 })
 

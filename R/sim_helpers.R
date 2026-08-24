@@ -136,22 +136,35 @@ compute_welfare <- function(task_outcomes, gamma_c = 0.05, utilisation = NULL) {
 
 ## ── CoNC variant aggregator ─────────────────────────────────────────
 ## Given matched truthful + deviated result tibbles (each with columns
-## `welfare`, `operator_surplus` or `net_op_surplus`), compute the three
-## CoNC variants:
-##   CoNC^op = (E[op_surplus | deviated] - E[op_surplus | truthful]) /
-##              E[welfare | truthful]      (operator-side extraction rate)
+## `welfare`, `revenue`, and `operator_surplus` or `net_op_surplus`),
+## compute the CoNC family and the operator's extraction rate.
+##
+## eq:conc pins the CoNC^op numerator as the collected-REVENUE delta, which
+## the accounting-identity sentence reads as the agents' aggregate payment
+## increment E[sum_i p_i^delta - sum_i p_i^*]:
+##   CoNC^op = (E[revenue | deviated] - E[revenue | truthful]) /
+##              E[welfare | truthful]      (operator-side cost of no credibility)
 ##   CoNC^W  = (E[welfare | truthful] - E[welfare | deviated]) /
 ##              E[welfare | truthful]      (welfare-side loss rate)
-##   CoNC^ag = CoNC^W + CoNC^op            (agent-side surplus loss:
-##                                          welfare loss + operator transfer)
-##   CoNC^op_rev = (E[op_surplus | deviated] - E[op_surplus | truthful]) /
+##   CoNC^ag = CoNC^W + CoNC^op            (agent-side surplus loss = welfare
+##                                          loss + payment increment; an
+##                                          accounting identity, since agent
+##                                          surplus = welfare - payments)
+##   CoNC^op_rev = (E[revenue | deviated] - E[revenue | truthful]) /
 ##              E[revenue | truthful]      (same numerator over truthful
 ##                                          operator revenue; reported for the
-##                                          cor:conc-lb cells, NA when the
-##                                          input frames have no revenue column)
-## All three are dimensionless; the manuscript Theorem on CoNC predicts
-## CoNC^ag >= CoNC^op in absolute value (agents bear both the transfer and
-## the DWL).
+##                                          cor:conc-lb cells)
+##
+## The operator's own extraction surplus is a DIFFERENT quantity: it counts the
+## ghost payment increments on the still-allocated agents and ignores the
+## displaced agent's forgone payment, so it neither equals the revenue delta
+## (except where the marginal payment is zero, e.g. VCG) nor satisfies the
+## CoNC^ag identity.  It is reported separately, over the same denominator:
+##   extraction^op = (E[op_surplus | deviated] - E[op_surplus | truthful]) /
+##              E[welfare | truthful]
+##
+## All are dimensionless.  Every revenue-delta quantity (CoNC^op, CoNC^op_rev
+## and hence CoNC^ag) is NA when the input frames predate the revenue column.
 
 compute_conc_variants <- function(truthful, deviated) {
   ## Pick the operator-surplus column flexibly.
@@ -165,25 +178,31 @@ compute_conc_variants <- function(truthful, deviated) {
   op_truth  <- mean(op_col(truthful), na.rm = TRUE)
   op_dev    <- mean(op_col(deviated), na.rm = TRUE)
 
-  ## Revenue-normalised operator ratio (eq:conc remark): same numerator, but
-  ## divided by truthful operator revenue instead of truthful welfare. NA when
-  ## the frames predate the revenue column (stored artifacts).
-  rev_truth <- if ("revenue" %in% names(truthful)) {
-    mean(truthful$revenue, na.rm = TRUE)
-  } else NA_real_
+  ## Collected revenue, truthful and deviated. NA when the frames predate the
+  ## revenue column (stored artifacts).
+  rev_of <- function(df) {
+    if ("revenue" %in% names(df)) mean(df$revenue, na.rm = TRUE) else NA_real_
+  }
+  rev_truth <- rev_of(truthful)
+  rev_dev   <- rev_of(deviated)
 
   if (!is.finite(W_truth) || W_truth <= 0) {
     return(list(CoNC_op = NA_real_, CoNC_ag = NA_real_, CoNC_W = NA_real_,
-                CoNC_op_rev = NA_real_))
+                CoNC_op_rev = NA_real_, extraction_op = NA_real_))
   }
-  CoNC_op <- (op_dev - op_truth) / W_truth
+  rev_delta <- if (is.finite(rev_truth) && is.finite(rev_dev)) {
+    rev_dev - rev_truth
+  } else NA_real_
+
+  extraction_op <- (op_dev - op_truth) / W_truth
+  CoNC_op <- rev_delta / W_truth
   CoNC_W  <- (W_truth - W_dev) / W_truth
   CoNC_ag <- CoNC_W + CoNC_op
   CoNC_op_rev <- if (is.finite(rev_truth) && rev_truth > 0) {
-    (op_dev - op_truth) / rev_truth
+    rev_delta / rev_truth
   } else NA_real_
   list(CoNC_op = CoNC_op, CoNC_ag = CoNC_ag, CoNC_W = CoNC_W,
-       CoNC_op_rev = CoNC_op_rev)
+       CoNC_op_rev = CoNC_op_rev, extraction_op = extraction_op)
 }
 
 
