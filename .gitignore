@@ -38,3 +38,6 @@ OPSLOG.md
 *MANUSCRIPT-ALIGN*.md
 **/plans/
 docs/superpowers/
+
+# Python bytecode from the scripts/verify_amin_*.py certificates
+__pycache__/
